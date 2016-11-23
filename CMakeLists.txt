@@ -152,7 +152,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     # lots of warnings with cl.exe right now, use /W1
     add_definitions("/W1 -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS /bigobj")
 else()
-    add_definitions( "-Wall -Wno-unknown-pragmas -Wno-unused-function" )
+    add_definitions( "-Wall -Wno-unknown-pragmas -Wno-unused-function -std=c++14" )
 endif()
 
 add_subdirectory( cmake )

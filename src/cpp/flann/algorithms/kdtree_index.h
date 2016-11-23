@@ -35,6 +35,7 @@
 #include <map>
 #include <cassert>
 #include <cstring>
+#include <chrono>
 #include <stdarg.h>
 #include <cmath>
 
@@ -253,9 +254,9 @@ protected:
     void buildIndexImpl()
     {
         // Create a permutable array of indices to the input vectors.
-    	std::vector<int> ind(size_);
+    	std::vector<int> ind_out(size_);
         for (size_t i = 0; i < size_; ++i) {
-            ind[i] = int(i);
+          ind_out[i] = int(i);
         }
 
         mean_ = new DistanceType[veclen_];
@@ -263,13 +264,21 @@ protected:
 
         tree_roots_.resize(trees_);
         /* Construct the randomized trees. */
+#pragma omp parallel num_threads(8)
+        {
+#pragma omp for schedule(static)
         for (int i = 0; i < trees_; i++) {
             /* Randomize the order of vectors to allow for unbiased sampling. */
-            std::random_shuffle(ind.begin(), ind.end());
-            tree_roots_[i] = divideTree(&ind[0], int(size_) );
+          std::vector<int> ind_in(ind_out.begin(), ind_out.end());
+            std::random_shuffle(ind_in.begin(), ind_in.end());
+            tree_roots_[i] = divideTree(&ind_in[0], int(size_) );
+        }
+
         }
         delete[] mean_;
         delete[] var_;
+
+
     }
 
     void freeIndex()

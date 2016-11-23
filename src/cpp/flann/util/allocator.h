@@ -108,21 +108,11 @@ public:
      */
     ~PooledAllocator()
     {
-        free();
     }
     
     void free()
     {
-        void* prev;
-        while (base != NULL) {
-            prev = *((void**) base); /* Get pointer to prev block. */
-            ::free(base);
-            base = prev;
-        }
-        base = NULL;
-        remaining = 0;
-        usedMemory = 0;
-        wastedMemory = 0;
+
     }
 
     /**
@@ -131,49 +121,8 @@ public:
      */
     void* allocateMemory(int size)
     {
-        int blocksize;
 
-        /* Round size up to a multiple of wordsize.  The following expression
-            only works for WORDSIZE that is a power of 2, by masking last bits of
-            incremented size to zero.
-         */
-        size = (size + (WORDSIZE - 1)) & ~(WORDSIZE - 1);
-
-        /* Check whether a new block must be allocated.  Note that the first word
-            of a block is reserved for a pointer to the previous block.
-         */
-        if (size > remaining) {
-
-            wastedMemory += remaining;
-
-            /* Allocate new storage. */
-            blocksize = (size + sizeof(void*) + (WORDSIZE-1) > BLOCKSIZE) ?
-                        size + sizeof(void*) + (WORDSIZE-1) : BLOCKSIZE;
-
-            // use the standard C malloc to allocate memory
-            void* m = ::malloc(blocksize);
-            if (!m) {
-                fprintf(stderr,"Failed to allocate memory.\n");
-                return NULL;
-            }
-
-            /* Fill first word of new block with pointer to previous block. */
-            ((void**) m)[0] = base;
-            base = m;
-
-            int shift = 0;
-            //int shift = (WORDSIZE - ( (((size_t)m) + sizeof(void*)) & (WORDSIZE-1))) & (WORDSIZE-1);
-
-            remaining = blocksize - sizeof(void*) - shift;
-            loc = ((char*)m + sizeof(void*) + shift);
-        }
-        void* rloc = loc;
-        loc = (char*)loc + size;
-        remaining -= size;
-
-        usedMemory += size;
-
-        return rloc;
+        return new char[size];
     }
 
     /**
@@ -201,6 +150,7 @@ inline void* operator new (std::size_t size, flann::PooledAllocator& allocator)
 
 inline void operator delete(void* p, flann::PooledAllocator& allocator)
 {
+  //delete[] p;
 }
 
 
